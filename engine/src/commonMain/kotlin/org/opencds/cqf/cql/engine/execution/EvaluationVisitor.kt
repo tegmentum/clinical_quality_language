@@ -180,6 +180,8 @@ import org.hl7.elm.r1.ByColumn
 import org.hl7.elm.r1.ByExpression
 import org.hl7.elm.r1.Sort
 import org.hl7.elm.r1.SortDirection
+import org.hl7.elm.r1.Subsumes
+import org.hl7.elm.r1.SubsumedBy
 
 class EvaluationVisitor : BaseElmLibraryVisitor<Value?, State?>() {
     override fun visitExpression(elm: Expression, context: State?): Value? {
@@ -1490,6 +1492,47 @@ class EvaluationVisitor : BaseElmLibraryVisitor<Value?, State?>() {
 
         comparator?.let { items.sortWith(it) }
         return items.toCqlList()
+    }
+
+    /**
+     * Phase-7 C-10 (restored 2026-11-10): null-propagation for the
+     * Subsumes clinical operator.
+     *
+     * Per CQL §Subsumes: 'If either or both arguments are null,
+     * the result is null.'  The default visitSubsumes provided by
+     * BaseElmClinicalVisitor walks both operands and returns the
+     * last visited sub-result (via visitFields(BinaryExpression)),
+     * which for a left-null Subsumes bubbles up the non-null right
+     * operand instead of null.
+     *
+     * This override makes null-propagation explicit.  For non-null
+     * operands we fall back to equivalence as the spec's base case
+     * ('returns true if the given codes are equivalent'), which is
+     * what the current no-terminology-hierarchy engine was already
+     * yielding for non-null inputs via the aggregation path.
+     */
+    override fun visitSubsumes(elm: Subsumes, context: State?): Value? {
+        val left = visitExpression(elm.operand[0], context)
+        val right = visitExpression(elm.operand[1], context)
+        if (left == null || right == null) {
+            return null
+        }
+        return EquivalentEvaluator.equivalent(left, right, context)
+    }
+
+    /**
+     * Phase-7 C-10 (restored 2026-11-10): null-propagation for the
+     * SubsumedBy clinical operator.  See the visitSubsumes
+     * commentary; SubsumedBy inherits the same null contract from
+     * CQL §SubsumedBy.
+     */
+    override fun visitSubsumedBy(elm: SubsumedBy, context: State?): Value? {
+        val left = visitExpression(elm.operand[0], context)
+        val right = visitExpression(elm.operand[1], context)
+        if (left == null || right == null) {
+            return null
+        }
+        return EquivalentEvaluator.equivalent(left, right, context)
     }
 
     override fun defaultResult(elm: Element, context: State?): Value? {
