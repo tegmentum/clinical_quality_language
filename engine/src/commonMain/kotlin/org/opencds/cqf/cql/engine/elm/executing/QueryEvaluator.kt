@@ -155,8 +155,12 @@ object QueryEvaluator {
                                             leftPushCount++
                                             for (src in elm.source) {
                                                 val sourceAlias = src.alias
-                                                if (sourceAlias != null && sourceAlias != thisAlias) {
-                                                    state.push(Variable(sourceAlias).withValue(left))
+                                                if (
+                                                    sourceAlias != null && sourceAlias != thisAlias
+                                                ) {
+                                                    state.push(
+                                                        Variable(sourceAlias).withValue(left)
+                                                    )
                                                     leftPushCount++
                                                 }
                                             }
@@ -172,12 +176,16 @@ object QueryEvaluator {
                                         var rightResult: Value? = null
                                         var rightPushCount = 0
                                         try {
-                                            state!!.push(Variable(thisAlias).withValue(right))
+                                            state.push(Variable(thisAlias).withValue(right))
                                             rightPushCount++
                                             for (src in elm.source) {
                                                 val sourceAlias = src.alias
-                                                if (sourceAlias != null && sourceAlias != thisAlias) {
-                                                    state.push(Variable(sourceAlias).withValue(right))
+                                                if (
+                                                    sourceAlias != null && sourceAlias != thisAlias
+                                                ) {
+                                                    state.push(
+                                                        Variable(sourceAlias).withValue(right)
+                                                    )
                                                     rightPushCount++
                                                 }
                                             }
@@ -185,7 +193,7 @@ object QueryEvaluator {
                                                 visitor.visitExpression(byItem.expression!!, state)
                                         } finally {
                                             while (rightPushCount > 0) {
-                                                state!!.pop()
+                                                state.pop()
                                                 rightPushCount--
                                             }
                                         }

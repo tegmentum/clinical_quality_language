@@ -5,6 +5,12 @@ import org.cqframework.cql.elm.visiting.BaseElmLibraryVisitor
 import org.hl7.cql.model.IntervalType
 import org.hl7.cql.model.ListType
 import org.hl7.elm.r1.*
+import org.hl7.elm.r1.ByColumn
+import org.hl7.elm.r1.ByExpression
+import org.hl7.elm.r1.Sort
+import org.hl7.elm.r1.SortDirection
+import org.hl7.elm.r1.SubsumedBy
+import org.hl7.elm.r1.Subsumes
 import org.opencds.cqf.cql.engine.debug.BreakpointAction
 import org.opencds.cqf.cql.engine.debug.SourceLocator.Companion.fromNode
 import org.opencds.cqf.cql.engine.elm.executing.*
@@ -176,12 +182,6 @@ import org.opencds.cqf.cql.engine.runtime.TemporalHelper
 import org.opencds.cqf.cql.engine.runtime.Value
 import org.opencds.cqf.cql.engine.runtime.toCqlDecimal
 import org.opencds.cqf.cql.engine.runtime.toCqlList
-import org.hl7.elm.r1.ByColumn
-import org.hl7.elm.r1.ByExpression
-import org.hl7.elm.r1.Sort
-import org.hl7.elm.r1.SortDirection
-import org.hl7.elm.r1.Subsumes
-import org.hl7.elm.r1.SubsumedBy
 
 class EvaluationVisitor : BaseElmLibraryVisitor<Value?, State?>() {
     override fun visitExpression(elm: Expression, context: State?): Value? {
@@ -1410,18 +1410,14 @@ class EvaluationVisitor : BaseElmLibraryVisitor<Value?, State?>() {
     /**
      * Phase-7 C-9 (restored 2026-11-10): standalone Sort operator.
      *
-     * The default visitSort provided by BaseElmVisitor walks the
-     * source and each SortByItem for side effects, but returns the
-     * last visited sub-result — which, when `by` is empty, is the
-     * unsorted source list.  That violates CQL §17.1 which says
-     * ascending sorts place nulls first and otherwise order by the
-     * natural comparator of the element type.
+     * The default visitSort provided by BaseElmVisitor walks the source and each SortByItem for
+     * side effects, but returns the last visited sub-result — which, when `by` is empty, is the
+     * unsorted source list. That violates CQL §17.1 which says ascending sorts place nulls first
+     * and otherwise order by the natural comparator of the element type.
      *
-     * This override implements the operator semantics: evaluate
-     * the source, then sort either by the provided SortByItems
-     * (ByExpression / ByColumn / bare direction) or, if `by` is
-     * empty, by the natural SortHelper comparator with nulls
-     * first.  Null source propagates to null.
+     * This override implements the operator semantics: evaluate the source, then sort either by the
+     * provided SortByItems (ByExpression / ByColumn / bare direction) or, if `by` is empty, by the
+     * natural SortHelper comparator with nulls first. Null source propagates to null.
      */
     override fun visitSort(elm: Sort, context: State?): Value? {
         val sourceResult = visitExpression(elm.source!!, context)
@@ -1482,8 +1478,7 @@ class EvaluationVisitor : BaseElmLibraryVisitor<Value?, State?>() {
 
                         val direction = byItem.direction
                         val isDesc =
-                            direction == SortDirection.DESC ||
-                                direction == SortDirection.DESCENDING
+                            direction == SortDirection.DESC || direction == SortDirection.DESCENDING
 
                         if (isDesc) baseComparator.reversed() else baseComparator
                     }
@@ -1495,21 +1490,17 @@ class EvaluationVisitor : BaseElmLibraryVisitor<Value?, State?>() {
     }
 
     /**
-     * Phase-7 C-10 (restored 2026-11-10): null-propagation for the
-     * Subsumes clinical operator.
+     * Phase-7 C-10 (restored 2026-11-10): null-propagation for the Subsumes clinical operator.
      *
-     * Per CQL §Subsumes: 'If either or both arguments are null,
-     * the result is null.'  The default visitSubsumes provided by
-     * BaseElmClinicalVisitor walks both operands and returns the
-     * last visited sub-result (via visitFields(BinaryExpression)),
-     * which for a left-null Subsumes bubbles up the non-null right
-     * operand instead of null.
+     * Per CQL §Subsumes: 'If either or both arguments are null, the result is null.' The default
+     * visitSubsumes provided by BaseElmClinicalVisitor walks both operands and returns the last
+     * visited sub-result (via visitFields(BinaryExpression)), which for a left-null Subsumes
+     * bubbles up the non-null right operand instead of null.
      *
-     * This override makes null-propagation explicit.  For non-null
-     * operands we fall back to equivalence as the spec's base case
-     * ('returns true if the given codes are equivalent'), which is
-     * what the current no-terminology-hierarchy engine was already
-     * yielding for non-null inputs via the aggregation path.
+     * This override makes null-propagation explicit. For non-null operands we fall back to
+     * equivalence as the spec's base case ('returns true if the given codes are equivalent'), which
+     * is what the current no-terminology-hierarchy engine was already yielding for non-null inputs
+     * via the aggregation path.
      */
     override fun visitSubsumes(elm: Subsumes, context: State?): Value? {
         val left = visitExpression(elm.operand[0], context)
@@ -1521,10 +1512,9 @@ class EvaluationVisitor : BaseElmLibraryVisitor<Value?, State?>() {
     }
 
     /**
-     * Phase-7 C-10 (restored 2026-11-10): null-propagation for the
-     * SubsumedBy clinical operator.  See the visitSubsumes
-     * commentary; SubsumedBy inherits the same null contract from
-     * CQL §SubsumedBy.
+     * Phase-7 C-10 (restored 2026-11-10): null-propagation for the SubsumedBy clinical operator.
+     * See the visitSubsumes commentary; SubsumedBy inherits the same null contract from CQL
+     * §SubsumedBy.
      */
     override fun visitSubsumedBy(elm: SubsumedBy, context: State?): Value? {
         val left = visitExpression(elm.operand[0], context)
